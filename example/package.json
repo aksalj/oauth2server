@@ -3,6 +3,7 @@
     "version": "0.0.1",
     "dependencies":{
         "express":"x.x.x",
-        "jade":"x.x.x"
+        "jade":"x.x.x",
+        "path":"x.x.x"
     }
 }

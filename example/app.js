@@ -10,10 +10,11 @@
  *  Description :
  *
  */
+var path = require('path');
 var express = require('express');
 var mongoose = require('mongoose');
 var passport = require('passport');
-var oauth = require(path.join(conf.paths.libraries, "oauth"));
+var oauth = require('./../index');
 
 var User = mongoose.model('User', new mongoose.Schema({
     name: String,
@@ -24,28 +25,30 @@ var User = mongoose.model('User', new mongoose.Schema({
 var app = express();
 
 // view engine setup
-app.set('views', path.join(conf.paths.static, 'auth/views'));
+app.set('views', path.join(__dirname, 'view'));
 app.set('view engine', 'jade');
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(app.router);
 
 oauth.initialize(User, "dialog", "/login");
 
-// routing
-app.get('/authorize', oauth.authorization);
-app.post('/authorize/decision', oauth.decision);
-app.post('/token', oauth.token);
+app.get('/authorize', oauth.authorization);         // Init client authorization
+app.post('/authorize/decision', oauth.decision);    // Process user's decision
+app.post('/token', oauth.token);                    // Issue client an access token in exchange for an auth code, client/pwd or user/pwd?
 
-app.get('(/login)', function (req, res, next) {
-
+app.get('/login', function (req, res, next) {
+    res.send('Login form');
 });
 
-app.get('(/protected)', passport.authenticate('bearer', { session: false }), function (req, res, next) {
+app.post('/login', function (req, res, next) {
+    res.send("Process login details");
+});
 
+app.get('/protected', passport.authenticate('bearer', { session: false }), function (req, res, next) {
+    res.send("Hello from protected resource!");
 });
 
 
 
-module.exports = app;
+app.listen(3000);
