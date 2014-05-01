@@ -20,6 +20,9 @@ var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
 var login = require('connect-ensure-login');
 var db = require('./db');
 
+var dialogView = "oauth/dialog";
+var loginURI = "/";
+
 {
     /**
      * BasicStrategy & ClientPasswordStrategy
@@ -94,20 +97,19 @@ var db = require('./db');
 }
 
 
-
-
 /**
  *
- * initialize library
+ * Setup server params;
  *
- * @param userModel Mongoose user model.
+ * @param userModel Mongoose user model. Required!
+ * @param approvalView Approval to rendered. Required for authorization page.
+ * @param loginURL Login redirect when not authenticated. Required for authorization page.
  */
-exports.initialize = function (userModel) {
+exports.initialize = function (userModel, approvalView, loginURL) {
     db.users.setModel(userModel);
+    dialogView = approvalView || dialogView;
+    loginURI = loginURL || loginURI;
 };
-
-// Redirect URI when not logged in.
-exports.loginRedirectURI = "/";
 
 // create OAuth 2.0 server
 var server = oauth2orize.createServer();
@@ -280,14 +282,10 @@ server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, d
 
 //TODO: Make sure `expire` is returned to callback in addition to token/code and/or type
 exports.authorization = [
-    login.ensureLoggedIn(exports.loginRedirectURI),
+    login.ensureLoggedIn(loginURI),
     server.authorization(function(clientID, redirectURI, done) {
         db.clients.findByClientId(clientID, function(err, client) {
             if (err) { return done(err); }
-            // WARNING: For security purposes, it is highly advisable to check that
-            //          redirectURI provided by the client matches one registered with
-            //          the server.  For simplicity, this example does not.  You have
-            //          been warned.
             if(client && client.clientCallback !== redirectURI) {
                 return done("Unregistered redirect URI",null,redirectURI);
             }
@@ -295,7 +293,7 @@ exports.authorization = [
         });
     }),
     function(req, res){
-        res.render('oauth/dialog', { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
+        res.render(dialogView, { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
     }
 ];
 
@@ -307,7 +305,7 @@ exports.authorization = [
 // a response.
 
 exports.decision = [
-    login.ensureLoggedIn(exports.loginRedirectURI),
+    login.ensureLoggedIn(loginURI),
     server.decision(null,function(req, done){
         if(req.body.scope){
             done(null,{scope:req.body.scope});
