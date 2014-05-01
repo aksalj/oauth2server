@@ -4,8 +4,8 @@
  *  Contact: aksalj@aksalj.me
  *  Website: http://www.aksalj.me
  *
- *  Project : Ngoma
- *  File : oauth.js
+ *  Project : oauth2server
+ *  File : index.js
  *  Date : 3/22/14 1:35 PM
  *  Description : Simple OAuth 2.0 Server (using oauth2orize and mongodb)
  *               https://github.com/jaredhanson/oauth2orize/blob/master/examples/all-grants/oauth2.js

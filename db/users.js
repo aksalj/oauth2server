@@ -4,7 +4,7 @@
  *  Contact: aksalj@aksalj.me
  *  Website: http://www.aksalj.me
  *
- *  Project : Ngoma
+ *  Project : oauth2server
  *  File : users.js
  *  Date : 3/28/14 5:02 PM
  *  Description :
