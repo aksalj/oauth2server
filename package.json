@@ -1,0 +1,18 @@
+{
+    "name": "oauth2server",
+    "version": "0.0.1",
+    "description": "Simple OAuth 2.0 Server (using oauth2orize and mongodb)",
+    "author": "Salama AB <aksalj@aksalj.me>",
+    "engines": {
+        "node": "0.10.x"
+    },
+    "dependencies":{
+        "mongoose":"x.x.x",
+        "passport":"x.x.x",
+        "oauth2orize":"x.x.x",
+        "passport-http":"x.x.x",
+        "passport-http-bearer":"x.x.x",
+        "passport-oauth2-client-password":"x.x.x",
+        "connect-ensure-login":"x.x.x"
+    }
+}
