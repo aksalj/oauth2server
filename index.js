@@ -36,22 +36,34 @@ var loginURI = "/";
      * the specification, in practice it is quite common.
      */
     passport.use(new BasicStrategy(
-        function(username, password, done) {
-            db.clients.findByClientId(username, function(err, client) {
-                if (err) { return done(err); }
-                if (!client) { return done(null, false); }
-                if (client.clientSecret != password) { return done(null, false); }
+        function (username, password, done) {
+            db.clients.findByClientId(username, function (err, client) {
+                if (err) {
+                    return done(err);
+                }
+                if (!client) {
+                    return done(null, false);
+                }
+                if (client.clientSecret != password) {
+                    return done(null, false);
+                }
                 return done(null, client);
             });
         }
     ));
 
     passport.use(new ClientPasswordStrategy(
-        function(clientId, clientSecret, done) {
-            db.clients.findByClientId(clientId, function(err, client) {
-                if (err) { return done(err); }
-                if (!client) { return done(null, false); }
-                if (client.clientSecret != clientSecret) { return done(null, false); }
+        function (clientId, clientSecret, done) {
+            db.clients.findByClientId(clientId, function (err, client) {
+                if (err) {
+                    return done(err);
+                }
+                if (!client) {
+                    return done(null, false);
+                }
+                if (client.clientSecret != clientSecret) {
+                    return done(null, false);
+                }
                 return done(null, client);
             });
         }
@@ -66,27 +78,39 @@ var loginURI = "/";
      * the authorizing user.
      */
     passport.use(new BearerStrategy(
-        function(accessToken, done) {
-            db.accessTokens.find(accessToken, function(err, token) {
-                if (err) { return done(err); }
-                if (!token) { return done(null, false); }
-                if(token.expires < Date.now()){
+        function (accessToken, done) {
+            db.accessTokens.find(accessToken, function (err, token) {
+                if (err) {
+                    return done(err);
+                }
+                if (!token) {
+                    return done(null, false);
+                }
+                if (token.expires < Date.now()) {
                     return done("Access token has expired", false);
                 }
 
-                if(token.userID != null) {
-                    db.users.find(token.userID, function(err, user) {
-                        if (err) { return done(err); }
-                        if (!user) { return done(null, false); }
+                if (token.userID != null) {
+                    db.users.find(token.userID, function (err, user) {
+                        if (err) {
+                            return done(err);
+                        }
+                        if (!user) {
+                            return done(null, false);
+                        }
                         var info = { scope: token.scope, expires: token.expires };
                         done(null, user, info);
                     });
                 } else {
                     //The request came from a client only since userID is null
                     //therefore the client is passed back instead of a user
-                    db.clients.findByClientId(token.clientID, function(err, client) {
-                        if(err) { return done(err); }
-                        if(!client) { return done(null, false); }
+                    db.clients.findByClientId(token.clientID, function (err, client) {
+                        if (err) {
+                            return done(err);
+                        }
+                        if (!client) {
+                            return done(null, false);
+                        }
                         var info = { scope: token.scope, expires: token.expires };
                         done(null, client, info);
                     });
@@ -96,20 +120,6 @@ var loginURI = "/";
     ));
 }
 
-
-/**
- *
- * Setup server params;
- *
- * @param userModel Mongoose user model. Required!
- * @param approvalView Approval to rendered. Required for authorization page.
- * @param loginURL Login redirect when not authenticated. Required for authorization page.
- */
-exports.initialize = function (userModel, approvalView, loginURL) {
-    db.users.setModel(userModel);
-    dialogView = approvalView || dialogView;
-    loginURI = loginURL || loginURI;
-};
 
 // create OAuth 2.0 server
 var server = oauth2orize.createServer();
@@ -127,13 +137,15 @@ var server = oauth2orize.createServer();
 // simple matter of serializing the client's ID, and deserializing by finding
 // the client by ID from the database.
 
-server.serializeClient(function(client, done) {
+server.serializeClient(function (client, done) {
     return done(null, client.id);
 });
 
-server.deserializeClient(function(id, done) {
-    db.clients.find(id, function(err, client) {
-        if (err) { return done(err); }
+server.deserializeClient(function (id, done) {
+    db.clients.find(id, function (err, client) {
+        if (err) {
+            return done(err);
+        }
         return done(null, client);
     });
 });
@@ -152,10 +164,12 @@ server.deserializeClient(function(id, done) {
 // the application.  The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
 
-server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, done) {
+server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, done) {
     var code = uid(16);
-    db.authorizationCodes.save(code, client.id, redirectURI, user._id, ares.scope, function(err) {
-        if (err) { return done(err); }
+    db.authorizationCodes.save(code, client.id, redirectURI, user._id, ares.scope, function (err) {
+        if (err) {
+            return done(err);
+        }
         done(null, code);
     });
 }));
@@ -166,10 +180,12 @@ server.grant(oauth2orize.grant.code(function(client, redirectURI, user, ares, do
 // the application.  The application issues a token, which is bound to these
 // values.
 
-server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
+server.grant(oauth2orize.grant.token(function (client, user, ares, done) {
     var token = uid(256);
-    db.accessTokens.save(token, user._id, client.clientId, ares.scope, function(err) {
-        if (err) { return done(err); }
+    db.accessTokens.save(token, user._id, client.clientId, ares.scope, function (err) {
+        if (err) {
+            return done(err);
+        }
         done(null, token);
     });
 }));
@@ -180,20 +196,32 @@ server.grant(oauth2orize.grant.token(function(client, user, ares, done) {
 // application issues an access token on behalf of the user who authorized the
 // code.
 
-server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done) {
-    db.authorizationCodes.find(code, function(err, authCode) {
-        if (err) { return done(err); }
-        if(!authCode) {return done(null,false);}
+server.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, done) {
+    db.authorizationCodes.find(code, function (err, authCode) {
+        if (err) {
+            return done(err);
+        }
+        if (!authCode) {
+            return done(null, false);
+        }
 
-        if (client.id !== authCode.clientID) { return done(null, false); }
-        if (redirectURI !== authCode.redirectURI) { return done(null, false); }
+        if (client.id !== authCode.clientID) {
+            return done(null, false);
+        }
+        if (redirectURI !== authCode.redirectURI) {
+            return done(null, false);
+        }
         //FIXME: Needs testing
-        if(authCode.expires < Date.now()){ return done("Authorization code has expired", false);}
+        if (authCode.expires < Date.now()) {
+            return done("Authorization code has expired", false);
+        }
 
         var token = uid(256)
-        db.accessTokens.save(token, authCode.userID, authCode.clientID, authCode.scope, function(err) {
-            if (err) { return done(err); }
-            db.authorizationCodes.delete(code,function(err){
+        db.accessTokens.save(token, authCode.userID, authCode.clientID, authCode.scope, function (err) {
+            if (err) {
+                return done(err);
+            }
+            db.authorizationCodes.delete(code, function (err) {
                 done(err, token);
             });
         });
@@ -205,34 +233,40 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the user who authorized the code.
 
-server.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
+server.exchange(oauth2orize.exchange.password(function (client, username, password, scope, done) {
 
     //Validate the client
-    db.clients.findByClientId(client.clientId, function(err, localClient) {
-        if (err) { return done(err); }
-        if(localClient === null) {
+    db.clients.findByClientId(client.clientId, function (err, localClient) {
+        if (err) {
+            return done(err);
+        }
+        if (localClient === null) {
             return done(null, false);
         }
-        if(localClient.clientSecret !== client.clientSecret) {
+        if (localClient.clientSecret !== client.clientSecret) {
             return done(null, false);
         }
         //Validate the user
-        db.users.findByUsername(username, function(err, user) {
-            if (err) { return done(err); }
-            if(user === null) {
+        db.users.findByUsername(username, function (err, user) {
+            if (err) {
+                return done(err);
+            }
+            if (user === null) {
                 return done(null, false);
             }
 
-            user.checkPassword(password,function(err, valid){
-                if(valid){
+            user.checkPassword(password, function (err, valid) {
+                if (valid) {
                     //Everything validated, return the token
                     var token = uid(256);
-                    db.accessTokens.save(token, user._id, client.clientId, scope, function(err) {
-                        if (err) { return done(err); }
+                    db.accessTokens.save(token, user._id, client.clientId, scope, function (err) {
+                        if (err) {
+                            return done(err);
+                        }
                         done(null, token);
                     });
-                }else{
-                    done(err,false);
+                } else {
+                    done(err, false);
                 }
             });
         });
@@ -244,95 +278,103 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the client who authorized the code.
 
-server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, done) {
+server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, done) {
 
     //Validate the client
-    db.clients.findByClientId(client.clientId, function(err, localClient) {
-        if (err) { return done(err); }
-        if(localClient === null) {
+    db.clients.findByClientId(client.clientId, function (err, localClient) {
+        if (err) {
+            return done(err);
+        }
+        if (localClient === null) {
             return done(null, false);
         }
-        if(localClient.clientSecret !== client.clientSecret) {
+        if (localClient.clientSecret !== client.clientSecret) {
             return done(null, false);
         }
         var token = uid(256);
         //Pass in a null for user id since there is no user with this grant type
-        db.accessTokens.save(token, null, client.clientId, scope, function(err) {
-            if (err) { return done(err); }
+        db.accessTokens.save(token, null, client.clientId, scope, function (err) {
+            if (err) {
+                return done(err);
+            }
             done(null, token);
         });
     });
 }));
 
-// user authorization endpoint
-//
-// `authorization` middleware accepts a `validate` callback which is
-// responsible for validating the client making the authorization request.  In
-// doing so, is recommended that the `redirectURI` be checked against a
-// registered value, although security requirements may vary across
-// implementations.  Once validated, the `done` callback must be invoked with
-// a `client` instance, as well as the `redirectURI` to which the user will be
-// redirected after an authorization decision is obtained.
-//
-// This middleware simply initializes a new authorization transaction.  It is
-// the application's responsibility to authenticate the user and render a dialog
-// to obtain their approval (displaying details about the client requesting
-// authorization).  We accomplish that here by routing through `ensureLoggedIn()`
-// first, and rendering the `dialog` view.
 
-//TODO: Make sure `expire` is returned to callback in addition to token/code and/or type
-exports.authorization = [
-    login.ensureLoggedIn(loginURI),
-    server.authorization(function(clientID, redirectURI, done) {
-        db.clients.findByClientId(clientID, function(err, client) {
-            if (err) { return done(err); }
-            if(client && client.clientCallback !== redirectURI) {
-                return done("Unregistered redirect URI",null,redirectURI);
-            }
-            return done(null, client, redirectURI);
-        });
-    }),
-    function(req, res){
-        res.render(dialogView, { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
-    }
-];
+function setupEndPoints() {
 
-// user decision endpoint
-//
-// `decision` middleware processes a user's decision to allow or deny access
-// requested by a client application.  Based on the grant type requested by the
-// client, the above grant middleware configured above will be invoked to send
-// a response.
+    // user authorization endpoint
+    //
+    // `authorization` middleware accepts a `validate` callback which is
+    // responsible for validating the client making the authorization request.  In
+    // doing so, is recommended that the `redirectURI` be checked against a
+    // registered value, although security requirements may vary across
+    // implementations.  Once validated, the `done` callback must be invoked with
+    // a `client` instance, as well as the `redirectURI` to which the user will be
+    // redirected after an authorization decision is obtained.
+    //
+    // This middleware simply initializes a new authorization transaction.  It is
+    // the application's responsibility to authenticate the user and render a dialog
+    // to obtain their approval (displaying details about the client requesting
+    // authorization).  We accomplish that here by routing through `ensureLoggedIn()`
+    // first, and rendering the `dialog` view.
 
-exports.decision = [
-    login.ensureLoggedIn(loginURI),
-    server.decision(null,function(req, done){
-        if(req.body.scope){
-            done(null,{scope:req.body.scope});
-        }else{
-            done("No Scope Specified!",null);
+    //TODO: Make sure `expire` is returned to callback in addition to token/code and/or type
+    exports.authorization = [
+        login.ensureLoggedIn(loginURI),
+        server.authorization(function (clientID, redirectURI, done) {
+            db.clients.findByClientId(clientID, function (err, client) {
+                if (err) {
+                    return done(err);
+                }
+                if (client && client.clientCallback !== redirectURI) {
+                    return done("Unregistered redirect URI", null, redirectURI);
+                }
+                return done(null, client, redirectURI);
+            });
+        }),
+        function (req, res) {
+            res.render(dialogView, { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
         }
-    })
-];
+    ];
+
+    // user decision endpoint
+    //
+    // `decision` middleware processes a user's decision to allow or deny access
+    // requested by a client application.  Based on the grant type requested by the
+    // client, the above grant middleware configured above will be invoked to send
+    // a response.
+
+    exports.decision = [
+        login.ensureLoggedIn(loginURI),
+        server.decision(null, function (req, done) {
+            if (req.body.scope) {
+                done(null, {scope: req.body.scope});
+            } else {
+                done("No Scope Specified!", null);
+            }
+        })
+    ];
 
 
-// token endpoint
-//
-// `token` middleware handles client requests to exchange authorization grants
-// for access tokens.  Based on the grant type being exchanged, the above
-// exchange middleware will be invoked to handle the request.  Clients must
-// authenticate when making requests to this endpoint.
-//TODO: Test refresh tokens
-exports.token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
-    server.token(),
-    server.errorHandler()
-];
+    // token endpoint
+    //
+    // `token` middleware handles client requests to exchange authorization grants
+    // for access tokens.  Based on the grant type being exchanged, the above
+    // exchange middleware will be invoked to handle the request.  Clients must
+    // authenticate when making requests to this endpoint.
+    //TODO: Test refresh tokens
+    exports.token = [
+        passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+        server.token(),
+        server.errorHandler()
+    ];
 
+};
 
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 /**
  * Return a unique identifier with the given `len`.
  *     uid(10); //"FDaS435D2z"
@@ -347,4 +389,21 @@ function uid(len) {
     }
 
     return buf.join('');
+};
+
+
+/**
+ *
+ * Setup server params;
+ *
+ * @param userModel Mongoose user model. Required!
+ * @param approvalView Approval to rendered. Required for authorization page.
+ * @param loginURL Login redirect when not authenticated. Required for authorization page.
+ */
+exports.initialize = function (userModel, approvalView, loginURL) {
+    db.users.setModel(userModel);
+    dialogView = approvalView || dialogView;
+    loginURI = loginURL || loginURI;
+
+    setupEndPoints();
 };

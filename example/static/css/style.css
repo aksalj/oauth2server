@@ -1,0 +1,25 @@
+/**
+ *  Copyright (c) 2014 Salama AB
+ *  All rights reserved
+ *  Contact: aksalj@aksalj.me
+ *  Website: http://www.aksalj.me
+ *
+ *  style.css : Description goes here
+ *  created: 2014-03-20
+ *
+ */
+body {
+    padding-top: 50px;
+}
+.yoyo-template {
+    padding: 40px 15px;
+    text-align: left;
+}
+
+.footer {
+    padding-left: 40px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-top: 40px;
+    border-top: 1px solid #eee;
+}

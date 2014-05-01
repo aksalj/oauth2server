@@ -1,0 +1,20 @@
+extends layout
+block content
+    div.container.yoyo-template
+        h1= "Hi " + user.name +"!"
+        div
+            p= client.name + " is requesting access to your account."
+            form(action="/authorize/decision", method="post")
+                input(name="transaction_id", type="hidden", value=transactionID)
+                ul
+                    each val in client.clientScope
+                        li
+                            if val.required
+                                input(type="checkbox", name="scope", value=val.name, checked, readonly)
+                            else
+                                input(type="checkbox", name="scope", value=val.name)
+                            label=val.description
+                div
+                    p= "Do you approve?"
+                    input(type="submit", value="Allow", id="allow")
+                    input(type="submit", value="Deny", id="deny", name="cancel")

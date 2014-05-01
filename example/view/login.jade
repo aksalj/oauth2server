@@ -1,0 +1,10 @@
+extends layout
+block additional_header
+    link(rel='stylesheet', href='/css/signin.css')
+block content
+    div.container.yoyo-template
+        form.form-signin(action="/login", method="post", role="form")
+            h2.form-signin-heading= "Please sign in"
+            input.form-control(type="text", name="username", placeholder="Username", required, autofocus)
+            input.form-control(type="password", name="password", placeholder="Password", required)
+            button.btn.btn-lg.btn-primary.btn-block(type="submit")= "Sign in"

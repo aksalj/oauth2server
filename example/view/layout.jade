@@ -1,0 +1,36 @@
+doctype html
+html
+    head
+        title= title
+        meta(name='viewport', content='width=device-width, initial-scale=1.0')
+        link(rel='stylesheet', href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css')
+        link(rel='stylesheet', href='/css/style.css')
+        block additional_header
+
+    body
+        .navbar.navbar-inverse.navbar-fixed-top(role='navigation')
+            .container
+                .navbar-header
+                    button.navbar-toggle(type='button', data-toggle='collapse', data-target='.navbar-collapse')
+                      span.sr-only Toggle navigation
+                      span.icon-bar
+                      span.icon-bar
+                      span.icon-bar
+                    a.navbar-brand(href='/') #{brand}
+                .navbar-collapse.collapse
+                    ul.nav.navbar-nav
+                      - var obj = { 'home':'Home' }
+                        - each val, key in obj
+                          - if (id == key)
+                            li.active
+                              a(href='#{key}') #{val}
+                          - else
+                            li
+                              a(href='#{key}') #{val}
+        block content
+
+        footer.footer
+            p Copyright &copy; 2014 #{brand}
+
+        script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+        script(type='text/javascript', src='//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js')
