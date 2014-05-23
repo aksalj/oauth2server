@@ -1,6 +1,6 @@
 {
     "name": "oauth2server",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Simple OAuth 2.0 Server (using oauth2orize and mongodb)",
     "author": "Salama AB <aksalj@aksalj.me>",
     "engines": {

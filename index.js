@@ -28,8 +28,8 @@ var loginURI = "/";
      * BasicStrategy & ClientPasswordStrategy
      *
      * These strategies are used to authenticate registered OAuth clients.  They are
-     * employed to protect the `token` endpoint, which consumers use to obtain
-     * access tokens.  The OAuth 2.0 specification suggests that clients use the
+     * employed to protect the `token` and `revoke` endpoints, which consumers use to obtain
+     * access tokens and revoke them.  The OAuth 2.0 specification suggests that clients use the
      * HTTP Basic scheme to authenticate.  Use of the client password strategy
      * allows clients to send the same credentials in the request body (as opposed
      * to the `Authorization` header).  While this approach is not recommended by
@@ -329,8 +329,11 @@ function setupEndPoints() {
                 if (err) {
                     return done(err);
                 }
-                if (client && client.clientCallback !== redirectURI) {
-                    return done("Unregistered redirect URI", null, redirectURI);
+
+
+                if (client && client.clientCallback !== null && client.clientCallback !== redirectURI) {
+                    var error = new Error("Unregistered redirect URI");
+                    return done(error, null, redirectURI);
                 }
                 return done(null, client, redirectURI);
             });
@@ -370,6 +373,39 @@ function setupEndPoints() {
         passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
         server.token(),
         server.errorHandler()
+    ];
+
+    // revoke endpoint
+    //
+    // `revoke` middleware handles token revocation. Clients must
+    // authenticate when making requests to this endpoint.
+    //TODO: make standard-compliant; see http://tools.ietf.org/html/rfc7009
+    exports.revoke = [
+        passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+        function (req, res) {
+            //TODO: Delete token?
+            var tk = req.query.token;
+            var client = req.user.clientId; //??
+            db.accessTokens.find(tk, function (err, token) {
+                if(!err && token){
+
+                    if(token.clientID == client) {
+                        db.accessTokens.delete(tk, function (err) {
+                            if (!err){
+                                res.send(200, "Token revoked!");
+                            } else {
+                                res.send(500, "Oops! Something went wrong :(");
+                            }
+                        });
+                    } else {
+                        res.send(403, "Unauthorized Client (" + client + ")");
+                    }
+
+                } else {
+                    res.send(400, "Unable to revoke token");
+                }
+            });
+        }
     ];
 
 };
