@@ -12,7 +12,6 @@
         "oauth2orize":"x.x.x",
         "passport-http":"x.x.x",
         "passport-http-bearer":"x.x.x",
-        "passport-oauth2-client-password":"x.x.x",
-        "connect-ensure-login":"x.x.x"
+        "passport-oauth2-client-password":"x.x.x"
     }
 }

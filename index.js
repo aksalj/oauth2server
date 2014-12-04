@@ -17,11 +17,7 @@ var passport = require('passport');
 var BasicStrategy = require('passport-http').BasicStrategy;
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
-var login = require('connect-ensure-login');
 var db = require('./db');
-
-var dialogView = "oauth/dialog";
-var loginURI = "/";
 
 {
     /**
@@ -98,7 +94,7 @@ var loginURI = "/";
                         if (!user) {
                             return done(null, false);
                         }
-                        var info = { scope: token.scope, expires: token.expires };
+                        var info = {scope: token.scope, expires: token.expires};
                         done(null, user, info);
                     });
                 } else {
@@ -111,7 +107,7 @@ var loginURI = "/";
                         if (!client) {
                             return done(null, false);
                         }
-                        var info = { scope: token.scope, expires: token.expires };
+                        var info = {scope: token.scope, expires: token.expires};
                         done(null, client, info);
                     });
                 }
@@ -318,30 +314,27 @@ function setupEndPoints() {
     // This middleware simply initializes a new authorization transaction.  It is
     // the application's responsibility to authenticate the user and render a dialog
     // to obtain their approval (displaying details about the client requesting
-    // authorization).  We accomplish that here by routing through `ensureLoggedIn()`
-    // first, and rendering the `dialog` view.
+    // authorization).
 
     //TODO: Make sure `expire` is returned to callback in addition to token/code and/or type
     exports.authorization = [
-        login.ensureLoggedIn(loginURI),
         server.authorization(function (clientID, redirectURI, done) {
             db.clients.findByClientId(clientID, function (err, client) {
                 if (err) {
-                    return done(err);
+                    return done(err, false);
                 }
-
 
                 if (client && client.clientCallback !== null && client.clientCallback !== redirectURI) {
                     var error = new Error("Unregistered redirect URI");
-                    return done(error, null, redirectURI);
-                }
+                    console.error(error);
+                    return done(error, false);
+                }// clients with null redirect will use any redirect specified?
+
                 return done(null, client, redirectURI);
             });
-        }),
-        function (req, res) {
-            res.render(dialogView, { transactionID: req.oauth2.transactionID, user: req.user, client: req.oauth2.client });
-        }
+        })
     ];
+
 
     // user decision endpoint
     //
@@ -351,7 +344,6 @@ function setupEndPoints() {
     // a response.
 
     exports.decision = [
-        login.ensureLoggedIn(loginURI),
         server.decision(null, function (req, done) {
             if (req.body.scope) {
                 done(null, {scope: req.body.scope});
@@ -370,7 +362,7 @@ function setupEndPoints() {
     // authenticate when making requests to this endpoint.
     //TODO: Test refresh tokens
     exports.token = [
-        passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+        passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
         server.token(),
         server.errorHandler()
     ];
@@ -381,17 +373,17 @@ function setupEndPoints() {
     // authenticate when making requests to this endpoint.
     //TODO: make standard-compliant; see http://tools.ietf.org/html/rfc7009
     exports.revoke = [
-        passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+        passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
         function (req, res) {
             //TODO: Delete token?
             var tk = req.query.token;
             var client = req.user.clientId; //??
             db.accessTokens.find(tk, function (err, token) {
-                if(!err && token){
+                if (!err && token) {
 
-                    if(token.clientID == client) {
+                    if (token.clientID == client) {
                         db.accessTokens.delete(tk, function (err) {
-                            if (!err){
+                            if (!err) {
                                 res.send(200, "Token revoked!");
                             } else {
                                 res.send(500, "Oops! Something went wrong :(");
@@ -410,7 +402,9 @@ function setupEndPoints() {
 
 };
 
-function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 /**
  * Return a unique identifier with the given `len`.
  *     uid(10); //"FDaS435D2z"
@@ -433,13 +427,8 @@ function uid(len) {
  * Setup server params;
  *
  * @param userModel Mongoose user model. Required!
- * @param approvalView Approval to rendered. Required for authorization page.
- * @param loginURL Login redirect when not authenticated. Required for authorization page.
  */
-exports.initialize = function (userModel, approvalView, loginURL) {
+exports.initialize = function (userModel) {
     db.users.setModel(userModel);
-    dialogView = approvalView || dialogView;
-    loginURI = loginURL || loginURI;
-
     setupEndPoints();
 };
